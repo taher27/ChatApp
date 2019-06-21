@@ -1,5 +1,5 @@
-import React, {Component} from 'react';
-import Chatkit from '@pusher/chatkit';
+import React, { Component } from 'react';
+import { ChatManager, TokenProvider } from '@pusher/chatkit-client'
 import MessageList from './component/MessageList';
 import SendMessageForm from './component/SendMessageForm';
 import RoomList from './component/RoomList';
@@ -11,32 +11,35 @@ class App extends Component {
 
   constructor() {
     super()
+
     this.state = {
-      roomId:  null,
+      roomId: null,
       messages: [],
-      joinableRooms: [],
-      joinedRooms: []
+      joinedRooms: [],
+      joinableRooms: []
     }
-    this.sendMessage = this.sendMessage.bind(this);
-    this.subscribeToRoom = this.subscribeToRoom.bind(this);
-    this.getRooms = this.getRooms.bind(this);
-    this.createRoom = this.createRoom.bind(this);
+    this.sendMessage = this.sendMessage.bind(this)
+    this.subscribeToRoom = this.subscribeToRoom.bind(this)
+    this.getRooms = this.getRooms.bind(this)
+    this.createRoom = this.createRoom.bind(this)
   }
-  
-  componentDidMount(){
-    const chatManager = new Chatkit.ChatManager({
+
+  componentDidMount() {
+    const chatkit = new ChatManager({
       instanceLocator,
-      userId: 'Aryan',
-      tokenProvider: new Chatkit.TokenProvider({
+      userId: 'Lucifer',
+      tokenProvider: new TokenProvider({
         url: tokenUrl
       })
     })
-    chatManager.connect()
-    .then(currentUser => {
-      this.currentUser = currentUser
-      this.getRooms()
-    })
-    .catch(err => console.log('error on Connecting: ', err))
+
+    chatkit
+      .connect()
+      .then(currentUser => {
+        this.currentUser = currentUser
+        this.getRooms();
+      })
+      .catch(err => console.log('error on connecting: ', err))
   }
 
   getRooms() {
@@ -47,21 +50,23 @@ class App extends Component {
           joinedRooms: this.currentUser.rooms
         })
       })
-      .catch(err => console.log('error on joinableRooms: ', err))
+      .catch(err => console.log('error on joinableRooms: ' ,err))
   }
 
   subscribeToRoom(roomId) {
     this.setState({ messages: [] })
-    this.currentUser.subsribeToRoom({
+    this.currentUser.subscribeToRoom({
       roomId: roomId,
       hooks: {
         onNewMessage: message => {
-           this.setState({
+          console.log('roomId: ', roomId)
+          console.log('message: ', message.text);
+          this.setState({
             messages: [...this.state.messages, message]
           })
         }
       }
-    }) 
+    })
     .then(room => {
       this.setState({
         roomId: room.id
@@ -75,7 +80,7 @@ class App extends Component {
     this.currentUser.sendMessage({
       text,
       roomId: this.state.roomId
-      })
+    })
   }
 
   createRoom(name) {
@@ -83,27 +88,23 @@ class App extends Component {
       name
     })
     .then(room => this.subscribeToRoom(room.id))
-    .catch(err => console.log('error with createRoom: ', err))
+    .catch(err => console.log('error creating a room: ', err))
   }
 
   render() {
-    console.log(this.state.messages);
-    return(
-      <div className="app">
-        <RoomList 
-            roomId = {this.state.roomId}
-            subscribeToRoom={this.subscribeToRoom} 
-            rooms={[...this.state.joinableRooms, ...this.state.joinedRooms]} />
-
-        <MessageList 
-            roomId={this.state.roomId}
-            messages={this.state.messages}/>
-        
-        <SendMessageForm 
-            disabled={!this.state.roomId}
-            sendMessage={this.sendMessage}/>
-        
-        <NewRoomForm createRoom={this.createRoom} />
+    return (
+      <div className="App">
+        <RoomList
+          roomId={this.state.roomId}
+          subscribeToRoom={this.subscribeToRoom}
+          rooms={[...this.state.joinableRooms, ...this.state.joinedRooms]}/>
+        <MessageList
+          roomId={this.state.roomId}
+          messages={this.state.messages}/>
+        <SendMessageForm
+          disabled={!this.state.roomId} 
+          onSend={this.sendMessage}/>
+        <NewRoomForm createRoom={this.createRoom}/>
       </div>
     );
   }

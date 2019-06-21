@@ -1,6 +1,4 @@
 import React from 'react'
-import { getDefaultWatermarks } from 'istanbul-lib-report';
-import { createRequireFromPath } from 'module';
 
 class RoomList extends React.Component {
     render() {
@@ -16,7 +14,7 @@ class RoomList extends React.Component {
                                 <a 
                                     onClick={() => this.props.subscribeToRoom(room.id)}
                                     href="#">
-                                    # {room.name}
+                                    - {room.name}
                                 </a>
                             </li>
                         )
